@@ -1,39 +1,40 @@
 ### Stage I - Fix the problems
-
 * The timer keeps going up after I press stop. <br><br>
-**Implementation**: Used 'clearInterval' to stop the timer
 
-* The app does not update the download status message after the user downloads the audio. <br><br>
-**Implementation**: Passed the function 'onDownloadRecording' as a prop to the Recorder Component. This function sets the value of download status to 'true' once the user downloads the audio.
+**Implementation:** Used 'clearInterval' to stop the timer
+
+*The app does not update the download status message after the user downloads the audio.<br><br>
+
+**Implementation:** Passed the function 'onDownloadRecording' as a prop to the Recorder Component. This function sets the value of the download status to 'true' once the user downloads the audio.
 
 ### Stage II - Improve the UX
-
 * Don't show the start recording button unless the user has granted microphone permissions.<br><br>
-**Implementation**: Declared the new state 'permission' that checks if the user has granted microphone access. The button is displayed only if the permission is set to 'true'.
-  
-* Don't let the user start the recording unless they have named the recording already.<br><br>
-**Implementation**: If the 'recordName' is empty and the user clicks on 'Start recording' button, validation message is displayed on the screen. The recording does not begin until valid name is entered in the text box.
-  
-* Make the name of downloaded file the name of the recording.<br><br>
-**Implementation**:  Set the link.download in the onClick method to recordName which is stored as a state.
+
+**Implementation:** Declared the new state 'permission' that checks if the user has granted microphone access. The button is displayed only if the permission is set to 'true'.
+
+* Only let the user start the recording if they have already named it.<br><br>
+
+**Implementation:** If the 'recordName' is empty and the user clicks on the 'Start recording' button, a validation message is displayed on the screen. The recording begins once a valid name is entered in the text box.
+
+* Make the name of the downloaded file the name of the recording.<br><br>
+
+**Implementation:** Set the link.download in the onClick method to recordName, which is stored as a state.
 
 ### Stage III - Implement a new feature
+* In addition to the download button, add an "Upload" button that implements the handleUpload function. This function simulates a transcription process whereby the audio is sent to a server and a transcript is returned. The function takes 5 seconds to run and can either fail or succeed. <br><br>
 
-* In addition to the download button, add an "Upload" button that implements the handleUpload function.
-  This function simulates a transcription process whereby the audio is sent to a server and a transcript is returned.
-  The function takes 5 seconds to run and can either fail or succeed.<br><br>
-**Implementation**: Created a button which triggers handleUpload on click. Store the audioBlob as a state and pass it as the argument to the handleUpload. Rest of the task is taken care by the UploadManager.
-  
-* Add UI to indicate a status while the audio is "uploading"<br><br>
-**Implementation**: Created a new state _isUploading_ to keep track of uploading process. Once the upload button is clicked, the state is changed to true. It is reverted back to false after receiveing the response. The button name is conditioned on the value of this state.
+**Implementation:** Created a button that triggers 'handleUpload' on click. Store the audioBlob as a state and pass it as the argument to the handleUpload. The rest of the task is taken care of by the UploadManager.
+
+* Add UI to indicate a status while the audio is "uploading" <br><br>
+
+**Implementation:** Created a new state, 'isUploading,' to keep track of the uploading process. Once the upload button is clicked, the state is changed to true. It is reverted to false after receiving the response. The button name is conditioned on the value of this state.
+
 * Add UI to handle the case where the upload fails.
 * Add UI to handle the case where the upload succeeds, displaying the returned data.<br><br>
-**Implementation**: _'isUploaded'_ and _'isUploadSuccess'_ states indicates if the process is completed. The data returned by the UploadManager is stored in a state _'responseMessage'_. The response is displayed on the screen. The styling of the div is based on the success/failure of the request.
 
-  
+**Implementation:** 'isUploaded' and 'isUploadSuccess' indicate if the process is completed. The data returned by the UploadManager is stored in a state 'responseMessage'. The response is displayed on the screen. The styling of the div is based on the success/failure of the request.
+
 ### BONUS: Stage IV - Indicate Microphone Input Volume
+OPTIONAL: Right now, when the user is recording, there is no feedback on the screen indicating that the microphone is working. Let's solve this.<br><br>
 
-- OPTIONAL: Right now, when the user is recording, there is no feedback on the screen indicating that the microphone is working. Let's solve this. <br><br>
-
-**Implementation**: This was an interesting part. The audio is processed using the audioContext, analyzer, and script processor taking this <a href="https://stackoverflow.com/a/52952907"> article </a> as a reference. Instead of using jQery and modifying the DOM, I stored the average volume and intensity indicators as states. 
-
+**Implementation:** This was an exciting part. The audio is processed using the audioContext, analyzer, and script processor, taking this article as a reference. Instead of using jQuery and modifying the DOM, I stored the average volume and intensity indicators as states.
