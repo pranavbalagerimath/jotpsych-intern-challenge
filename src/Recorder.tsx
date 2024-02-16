@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { UploadManager } from "./UploadManager";
+import "./Recorder.css";
 
 interface RecordingProps {
   onDownloadRecording: () => void;
@@ -8,10 +9,10 @@ interface RecordingProps {
 const RecordingComponent: React.FC<RecordingProps> = ({
   onDownloadRecording,
 }) => {
-  const [isRecording, setIsRecording] = useState<boolean>(false);
-  const [recordingName, setRecordingName] = useState<string>("");
-  const [progressTime, setProgressTime] = useState<number>(0);
-  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+    const [isRecording, setIsRecording] = useState<boolean>(false);
+    const [recordingName, setRecordingName] = useState<string>("");
+    const [progressTime, setProgressTime] = useState<number>(0);
+    const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
     const [audioUrl, setAudioUrl] = useState<string>("");
     const [permission, setPermission] = useState<boolean>(false);
     const [showInvalidNameMessage, setShowInvalidNameMessage] = useState<boolean>(false);
@@ -20,16 +21,17 @@ const RecordingComponent: React.FC<RecordingProps> = ({
     const [isUploaded, setIsUploaded] = useState<boolean>(false);
     const [isUploadSuccess, setIsUploadSuccess] = useState<boolean>();
     const [responseMessage, setResponseMessage] = useState<string>("");
+    const [inputVolume, setInputVolume] = useState<string[]>([]);
 
-  const progressInterval = useRef<number | null>(null);
-  const mediaRecorder = useRef<MediaRecorder | null>(null);
+    const progressInterval = useRef<number | null>(null);
+    const mediaRecorder = useRef<MediaRecorder | null>(null);
 
-  const handleStartRecording = () => {
-      if (!mediaRecorder.current) return;
-      if (recordingName === "") {
-          setShowInvalidNameMessage(true);
-          return;
-      }
+    const handleStartRecording = () => {
+        if (!mediaRecorder.current) return;
+        if (recordingName === "") {
+            setShowInvalidNameMessage(true);
+            return;
+        }
 
     setAudioChunks([]);
     setAudioUrl("");
@@ -37,7 +39,7 @@ const RecordingComponent: React.FC<RecordingProps> = ({
     setIsRecording(true);
 
     progressInterval.current = setInterval(() => {
-      setProgressTime((prevTime) => prevTime + 1);
+        setProgressTime((prevTime) => prevTime + 1);
     }, 1000);
   };
 
@@ -107,7 +109,14 @@ const RecordingComponent: React.FC<RecordingProps> = ({
               analyser.getByteFrequencyData(array);
               const arraySum = array.reduce((a, value) => a + value, 0);
               const average = arraySum / array.length;
-              //console.log(Math.round(average));
+              const numberOfPidsToColor = Math.round(average / 10);
+              for (let i = 0; i < 10; i++) {
+                  inputVolume[i] = "#e6e7e8";
+              }
+              for (let j = 0; j < numberOfPidsToColor; j++) {
+                  inputVolume[j] = "#69ce2b";
+              }
+              setInputVolume(inputVolume);
           };
       } catch (err) {
         console.error("Failed to get user media", err);
@@ -171,6 +180,19 @@ const RecordingComponent: React.FC<RecordingProps> = ({
           >
               {isRecording ? "Stop Recording" : "Start Recording"}
           </button>
+          }
+          {isRecording && <div className="pids-wrapper">
+              <div className="pid" style={{ backgroundColor: inputVolume[0] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[1] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[2] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[3] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[4] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[5] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[6] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[7] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[8] }}></div>
+              <div className="pid" style={{ backgroundColor: inputVolume[9] }}></div>
+          </div>
           }
       <div style={{ marginBottom: "20px" }}>
         Progress Time: {progressTime} seconds
