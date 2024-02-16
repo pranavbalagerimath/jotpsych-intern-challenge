@@ -15,6 +15,11 @@ const RecordingComponent: React.FC<RecordingProps> = ({
     const [audioUrl, setAudioUrl] = useState<string>("");
     const [permission, setPermission] = useState<boolean>(false);
     const [showInvalidNameMessage, setShowInvalidNameMessage] = useState<boolean>(false);
+    const [audioBlob, setAudioBlob] = useState<Blob>();
+    const [isUploading, setIsUploading] = useState<boolean>(false);
+    const [isUploaded, setIsUploaded] = useState<boolean>(false);
+    const [isUploadSuccess, setIsUploadSuccess] = useState<boolean>();
+    const [responseMessage, setResponseMessage] = useState<string>("");
 
   const progressInterval = useRef<number | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
@@ -45,14 +50,23 @@ const RecordingComponent: React.FC<RecordingProps> = ({
     setProgressTime(0);
   };
 
-  const handleUpload = (audioBlob: Blob) => {
+    const handleUpload = (audioBlob: Blob) => {
+        setIsUploading(true);
     UploadManager.upload(audioBlob)
-      .then((response) => {
+        .then((response) => {
+            setIsUploading(false);
+            setIsUploaded(true);
+            setIsUploadSuccess(true);
+            setResponseMessage(response.transcript);
         console.log(
           `Upload successful. Transcript: ${response.transcript}, Size: ${response.size} bytes`
         );
       })
-      .catch((error) => {
+        .catch((error) => {
+            setIsUploading(false);
+            setIsUploaded(true);
+            setIsUploadSuccess(false);
+        setResponseMessage(error.message);
         console.error("Upload failed:", error.message);
       });
   };
@@ -74,9 +88,27 @@ const RecordingComponent: React.FC<RecordingProps> = ({
               setPermission(true);
           }
         mediaRecorder.current = new MediaRecorder(stream);
-        mediaRecorder.current.ondataavailable = (event) => {
-          setAudioChunks((currentChunks) => [...currentChunks, event.data]);
-        };
+          mediaRecorder.current.ondataavailable = (event) => {
+              setAudioChunks((currentChunks) => [...currentChunks, event.data]);
+          }
+          const audioContext = new AudioContext();
+          const analyser = audioContext.createAnalyser();
+          const microphone = audioContext.createMediaStreamSource(stream);
+          const scriptProcessor = audioContext.createScriptProcessor(2048, 1, 1);
+
+          analyser.smoothingTimeConstant = 0.8;
+          analyser.fftSize = 1024;
+
+          microphone.connect(analyser);
+          analyser.connect(scriptProcessor);
+          scriptProcessor.connect(audioContext.destination);
+          scriptProcessor.onaudioprocess = function () {
+              const array = new Uint8Array(analyser.frequencyBinCount);
+              analyser.getByteFrequencyData(array);
+              const arraySum = array.reduce((a, value) => a + value, 0);
+              const average = arraySum / array.length;
+              //console.log(Math.round(average));
+          };
       } catch (err) {
         console.error("Failed to get user media", err);
       }
@@ -92,8 +124,10 @@ const RecordingComponent: React.FC<RecordingProps> = ({
       });
       const url = URL.createObjectURL(audioBlob);
       setAudioUrl(url);
+      setAudioBlob(audioBlob);
     }
   }, [audioChunks, isRecording]);
+    const uploadMessageStyle = isUploadSuccess ? { color: "#4ee44e" } : { color: "red" };
 
   return (
     <div
@@ -147,7 +181,7 @@ const RecordingComponent: React.FC<RecordingProps> = ({
             onClick={() => {
               const link = document.createElement("a");
               link.href = audioUrl;
-                          link.download = recordingName +`.webm`;
+              link.download = recordingName +`.webm`;
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
@@ -166,6 +200,22 @@ const RecordingComponent: React.FC<RecordingProps> = ({
           >
             Download Recording
           </button>
+        <button
+          onClick={(e) => audioBlob && handleUpload(audioBlob)}
+          style={{
+                width: "80%",
+                padding: "10px",
+                marginBottom: "20px",
+                borderRadius: "5px",
+                border: "none",
+                backgroundColor: "#28a745",
+                color: "white",
+                cursor: "pointer",
+            }}
+                  >
+                      {isUploading ? "Uploading..." : "Upload Recording" }
+                  </button>
+                  {isUploaded ? <p style={uploadMessageStyle}> {responseMessage}</p> : null}
         </div>
       )}
     </div>
