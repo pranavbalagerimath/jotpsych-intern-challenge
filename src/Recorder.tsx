@@ -11,26 +11,29 @@ const RecordingComponent: React.FC<RecordingProps> = ({
     onDownloadRecording,
     onDownloadReset
 }) => {
+    // Recording states
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [recordingName, setRecordingName] = useState<string>("");
     const [progressTime, setProgressTime] = useState<number>(0);
     const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
     const [audioUrl, setAudioUrl] = useState<string>("");
+    const progressInterval = useRef<number | null>(null);
+    const mediaRecorder = useRef<MediaRecorder | null>(null);
+
+    // Basic checks
     const [permission, setPermission] = useState<boolean>(false);
     const [showInvalidNameMessage, setShowInvalidNameMessage] = useState<boolean>(false);
-    const [audioBlob, setAudioBlob] = useState<Blob>();
+    
 
     // Uploading states
+    const [audioBlob, setAudioBlob] = useState<Blob>();
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [isUploaded, setIsUploaded] = useState<boolean>(false);
     const [isUploadSuccess, setIsUploadSuccess] = useState<boolean>();
     const [responseMessage, setResponseMessage] = useState<string>("");
 
-    // Microphone setup
+    // Microphone volume
     const [inputVolume, setInputVolume] = useState<string[]>([]);
-
-    const progressInterval = useRef<number | null>(null);
-    const mediaRecorder = useRef<MediaRecorder | null>(null);
 
     const reset = () => {
         setIsUploading(false);
@@ -41,8 +44,12 @@ const RecordingComponent: React.FC<RecordingProps> = ({
     }
 
     const handleStartRecording = () => {
+        // Reset past states once the new recording is started
         reset();
+
         if (!mediaRecorder.current) return;
+
+        // Name check
         if (recordingName === "") {
             setShowInvalidNameMessage(true);
             return;
@@ -86,7 +93,24 @@ const RecordingComponent: React.FC<RecordingProps> = ({
         setResponseMessage(error.message);
         console.error("Upload failed:", error.message);
       });
-  };
+    };
+
+    const showInputVolume = () => {
+        return (
+            <div className="pids-wrapper">
+                <div className="pid" style={{ backgroundColor: inputVolume[0] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[1] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[2] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[3] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[4] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[5] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[6] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[7] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[8] }}></div>
+                <div className="pid" style={{ backgroundColor: inputVolume[9] }}></div>
+            </div>
+        );
+    }
 
   useEffect(() => {
     const initMediaRecorder = async () => {
@@ -108,6 +132,8 @@ const RecordingComponent: React.FC<RecordingProps> = ({
           mediaRecorder.current.ondataavailable = (event) => {
               setAudioChunks((currentChunks) => [...currentChunks, event.data]);
           }
+
+          // Volume analysis
           const audioContext = new AudioContext();
           const analyser = audioContext.createAnalyser();
           const microphone = audioContext.createMediaStreamSource(stream);
@@ -125,12 +151,14 @@ const RecordingComponent: React.FC<RecordingProps> = ({
               const arraySum = array.reduce((a, value) => a + value, 0);
               const average = arraySum / array.length;
               const numberOfPidsToColor = Math.round(average / 7.5);
+
+              // Coloring boxes based on average volume
               for (let i = 0; i < 10; i++) {
-                  inputVolume[i] = "#e6e7e8";
+                  inputVolume[i] = "#e6e7e8"; // grey
               }
               for (let j = 0; j < numberOfPidsToColor; j++) {
-                  inputVolume[j] = "#69ce2b";
-                  inputVolume[j+1] = "#69ce2b";
+                  inputVolume[j] = "#69ce2b"; //green
+                  inputVolume[j+1] = "#69ce2b"; //green
               }
               setInputVolume(inputVolume);
           };
@@ -152,7 +180,13 @@ const RecordingComponent: React.FC<RecordingProps> = ({
       setAudioBlob(audioBlob);
     }
   }, [audioChunks, isRecording]);
+
+    
+    // Change the color of the message based on upload response
     const uploadMessageStyle = isUploadSuccess ? { color: "#4ee44e" } : { color: "red" };
+
+    // Disable download button if the recording name is empty
+    const downloadStyle = recordingName === "" ? { backgroundColor: "#e6e7e8" } : { };
 
   return (
     <div
@@ -197,19 +231,9 @@ const RecordingComponent: React.FC<RecordingProps> = ({
               {isRecording ? "Stop Recording" : "Start Recording"}
           </button>
           }
-          {isRecording && <div className="pids-wrapper">
-              <div className="pid" style={{ backgroundColor: inputVolume[0] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[1] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[2] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[3] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[4] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[5] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[6] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[7] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[8] }}></div>
-              <div className="pid" style={{ backgroundColor: inputVolume[9] }}></div>
-          </div>
-          }
+
+          {isRecording && showInputVolume()}
+
       <div style={{ marginBottom: "20px" }}>
         Progress Time: {progressTime} seconds
       </div>
@@ -217,42 +241,28 @@ const RecordingComponent: React.FC<RecordingProps> = ({
         <div>
           <button
             onClick={() => {
-              const link = document.createElement("a");
-              link.href = audioUrl;
-              link.download = recordingName +`.webm`;
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-              onDownloadRecording();
+                const link = document.createElement("a");
+                link.href = audioUrl;
+                link.download = recordingName + `.webm`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                onDownloadRecording();
             }}
-            style={{
-              width: "80%",
-              padding: "10px",
-              marginBottom: "20px",
-              borderRadius: "5px",
-              border: "none",
-              backgroundColor: "#28a745",
-              color: "white",
-              cursor: "pointer",
-            }}
+            className="actionButtons"
+            style={downloadStyle}
+            disabled={recordingName===""}
           >
             Download Recording
           </button>
-        <button
-          onClick={(e) => audioBlob && handleUpload(audioBlob)}
-          style={{
-                width: "80%",
-                padding: "10px",
-                marginBottom: "20px",
-                borderRadius: "5px",
-                border: "none",
-                backgroundColor: "#28a745",
-                color: "white",
-                cursor: "pointer",
-            }}
-                  >
-                      {isUploading ? "Uploading..." : "Upload Recording" }
-                  </button>
+            <button
+                onClick={(e) => audioBlob && handleUpload(audioBlob)}
+                className="actionButtons"
+                style={downloadStyle}
+                disabled={recordingName === ""}
+            >
+                {isUploading ? "Uploading..." : "Upload Recording" }
+            </button>
                   {isUploaded ? <p style={uploadMessageStyle}> {responseMessage}</p> : null}
         </div>
       )}

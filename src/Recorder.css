@@ -8,3 +8,14 @@
     display: inline-block;
     margin: 3px;
 }
+
+.actionButtons {
+    width: 80%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #28a745;
+    color: #ffffff;
+    cursor: pointer;
+}
