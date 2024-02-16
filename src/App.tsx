@@ -7,8 +7,8 @@ function App() {
 
     return (
     <>
-            <div>User has downloaded recording: {downloadStatus+""}</div>
-            <RecordingComponent onDownloadRecording={() => setDownloadStatus(true)} />
+            <div>User has downloaded recording: {downloadStatus + ""}</div>
+            <RecordingComponent onDownloadRecording={() => setDownloadStatus(true)} onDownloadReset={() => setDownloadStatus(false)} />
     </>
   );
 }

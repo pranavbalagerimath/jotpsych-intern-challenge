@@ -3,11 +3,13 @@ import { UploadManager } from "./UploadManager";
 import "./Recorder.css";
 
 interface RecordingProps {
-  onDownloadRecording: () => void;
+    onDownloadRecording: () => void;
+    onDownloadReset: () => void;
 }
 
 const RecordingComponent: React.FC<RecordingProps> = ({
-  onDownloadRecording,
+    onDownloadRecording,
+    onDownloadReset
 }) => {
     const [isRecording, setIsRecording] = useState<boolean>(false);
     const [recordingName, setRecordingName] = useState<string>("");
@@ -17,16 +19,29 @@ const RecordingComponent: React.FC<RecordingProps> = ({
     const [permission, setPermission] = useState<boolean>(false);
     const [showInvalidNameMessage, setShowInvalidNameMessage] = useState<boolean>(false);
     const [audioBlob, setAudioBlob] = useState<Blob>();
+
+    // Uploading states
     const [isUploading, setIsUploading] = useState<boolean>(false);
     const [isUploaded, setIsUploaded] = useState<boolean>(false);
     const [isUploadSuccess, setIsUploadSuccess] = useState<boolean>();
     const [responseMessage, setResponseMessage] = useState<string>("");
+
+    // Microphone setup
     const [inputVolume, setInputVolume] = useState<string[]>([]);
 
     const progressInterval = useRef<number | null>(null);
     const mediaRecorder = useRef<MediaRecorder | null>(null);
 
+    const reset = () => {
+        setIsUploading(false);
+        setIsUploaded(false);
+        setIsUploadSuccess(false);
+        setResponseMessage("");
+        onDownloadReset();
+    }
+
     const handleStartRecording = () => {
+        reset();
         if (!mediaRecorder.current) return;
         if (recordingName === "") {
             setShowInvalidNameMessage(true);
@@ -54,7 +69,7 @@ const RecordingComponent: React.FC<RecordingProps> = ({
 
     const handleUpload = (audioBlob: Blob) => {
         setIsUploading(true);
-    UploadManager.upload(audioBlob)
+        UploadManager.upload(audioBlob)
         .then((response) => {
             setIsUploading(false);
             setIsUploaded(true);
@@ -109,12 +124,13 @@ const RecordingComponent: React.FC<RecordingProps> = ({
               analyser.getByteFrequencyData(array);
               const arraySum = array.reduce((a, value) => a + value, 0);
               const average = arraySum / array.length;
-              const numberOfPidsToColor = Math.round(average / 10);
+              const numberOfPidsToColor = Math.round(average / 7.5);
               for (let i = 0; i < 10; i++) {
                   inputVolume[i] = "#e6e7e8";
               }
               for (let j = 0; j < numberOfPidsToColor; j++) {
                   inputVolume[j] = "#69ce2b";
+                  inputVolume[j+1] = "#69ce2b";
               }
               setInputVolume(inputVolume);
           };
