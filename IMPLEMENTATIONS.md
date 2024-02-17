@@ -38,3 +38,9 @@
 OPTIONAL: Right now, when the user is recording, there is no feedback on the screen indicating that the microphone is working. Let's solve this.<br><br>
 
 **Implementation:** This was an exciting part. The audio is processed using the audioContext, analyzer, and script processor, taking this article as a reference. Instead of using jQuery and modifying the DOM, I stored the average volume and intensity indicators as states.
+
+
+### Additional cheks
+I have added few additional checks.
+- Reset the download status to false when the user starts a new recording.
+- Since, we are downloading the audio file with recordName, I disbale download and upload buttons if the user clears the name after finishing the recording.
